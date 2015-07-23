@@ -23,5 +23,8 @@ I want to explore this, through this proof of concept.
 Hmmmm. As for Python, you need Twisted and enum34 lib. It's for Python 2.7 btw. Don't have time to work with Py3.
 For client, I hope that it won't be shitty build system and that will allow me to work on Linux and Windows at the same time. :)
 
+## License
+See the LICENSE file for more information.
+
 * Freezing isn't the only anime to featuring acceleration ability, Fate/Zero too, Kyoukaisenjou to Horizon, and a lot of animes loves to show that.
 * Anime Inside. (TM)
