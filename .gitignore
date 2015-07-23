@@ -1,0 +1,4 @@
+# GitIgnore file
+
+# Python stuff
+*.pyc
