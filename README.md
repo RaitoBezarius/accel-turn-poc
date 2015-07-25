@@ -14,14 +14,13 @@ I want to explore this, through this proof of concept.
 
 ## Some random informations about this project
 
-- It is built using Python on the server. (Faster than doing plain C++ with Boost.Asio)
-- The client will be built using C++ and SFML. (But I can s/C++/Python/g if I feel like it.)
+- It is built using Python on the server and client. (Faster than doing plain C++ with Boost.Asio)
+- I hope I'll implement some client prediction and lag compensation maybe.
 - There'll no authentication, nor advanced AI, pathfinding shitty, things. It's a PROOF OF CONCEPT about the usability of such skill in MMORPG.
 - There'll be a lot of ACCEL TURN. DOUBLE ACCEL. TRIPLE ACCEL. TEMPEST TURN. UNLIMITED ACCEL WORKS. *
 
-## Building this project
-Hmmmm. As for Python, you need Twisted and enum34 lib. It's for Python 2.7 btw. Don't have time to work with Py3.
-For client, I hope that it won't be shitty build system and that will allow me to work on Linux and Windows at the same time. :)
+## Running this project
+You need Twisted, enum34 and PySFML :).
 
 ## License
 See the LICENSE file for more information.
