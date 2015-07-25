@@ -20,6 +20,8 @@ class Packet:
     }
 
     seq_id = 0
+    HeaderSize = struct.calcsize('!QLQ')
+    HeaderFmt = '!QLQ'
 
     def __init__(self):
         self._id = None
@@ -28,15 +30,18 @@ class Packet:
         self.content = array('c')
         self.current_offset = 0
 
-        self.header_serializer = struct.Struct('!QLQ')
+        self.header_serializer = struct.Struct(self.HeaderFmt)
 
         for integerType, fmt in self.integerFmt.items():
             for methodName in ("read", "write"):
                 methodName += integerType.title()
                 def doOperation(isRead, fmt, self, *args):
                     if isRead:
-                        return self.read(fmt)
+                        value, = self.read(fmt)
+                        return value
                     else:
+                        add_fmt = fmt[1] * (len(args) - 1)
+                        fmt += add_fmt
                         return self.write(fmt, *args)
 
                 methodObject = partial(doOperation,
@@ -69,14 +74,11 @@ class Packet:
         return (self.content_size is not None) and (len(self.content) == self.content_size)
 
     def consumeHeader(self, data):
-        HEADER_FMT = '!QLQ'
-        HEADER_SIZE = struct.calcsize(HEADER_FMT)
-
-        if len(data) < HEADER_SIZE:
+        if len(data) < self.HeaderSize:
             return 0
         else:
-            self._id, self.opcode, self.content_size = struct.unpack_from(HEADER_FMT, data)
-            return HEADER_SIZE
+            self._id, self.opcode, self.content_size = struct.unpack_from(self.HeaderFmt, data)
+            return self.HeaderSize
 
     def consumeContent(self, data):
         size_expected = self.content_size - len(self.content)
@@ -93,9 +95,10 @@ class Packet:
         struct.pack_into(fmt, self.content, self.content_size, *values)
         self.content_size += offset
 
-    def writeString(self, string):
-        self.writeUint32(len(string))
-        self.write('!{}s'.format(len(string)), string)
+    def writeString(self, *strings):
+        for string in strings:
+            self.writeUint32(len(string))
+            self.write('!{}s'.format(len(string)), string)
 
     def read(self, fmt):
         offset = struct.calcsize(fmt)
@@ -104,6 +107,12 @@ class Packet:
         return tpl
 
     def readString(self):
-        size, = self.readUint32()
+        size = self.readUint32()
         string, = self.read('!{}s'.format(size))
         return string
+
+    def skipBytes(self, n_bytes):
+        self.current_offset += n_bytes
+
+    def skip(self, fmt):
+        self.skipBytes(struct.calcsize(fmt))

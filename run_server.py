@@ -1,5 +1,5 @@
 from twisted.internet import reactor, endpoints
-from world import World
+from server.world import World
 
 def main():
     theWarudo = World()

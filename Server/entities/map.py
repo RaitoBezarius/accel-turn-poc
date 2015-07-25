@@ -1,5 +1,7 @@
-from utils.grid import WorldObjectGrid
-from utils.vector2 import applyPosition
+from server.utils.grid import WorldObjectGrid
+from server.utils.vector2 import applyPosition
+from shared.network.packet import Packet
+from shared.network.opcodes import Opcodes
 
 from functools import partial
 
@@ -55,19 +57,20 @@ class Map:
 
     def registerPlayer(self, player):
         newPlrData = player.packData()
+        assert (isinstance(newPlrData, Packet))
 
         for unit in self.grid:
             unitData = unit.packData()
+            assert (isinstance(unitData, Packet))
             player.sendPacket(unitData)
             unit.sendPacket(newPlrData)
 
         player.sendPacket(newPlrData)
 
     def unregisterPlayer(self, player):
-        pckt = Packet.construct(Opcode.SMSG_REMOVE_OBJECT)
+        pckt = Packet.construct(Opcodes.SMSG_REMOVE_OBJECT)
         pckt.writeUint64(player.objectId)
 
-        self.grid.remove(player)
         for unit in self.grid:
             unit.sendPacket(pckt)
 

@@ -1,5 +1,6 @@
-from network.packet import Packet
-from network.opcodes import Opcodes
+from shared.network.packet import Packet
+from shared.network.opcodes import Opcodes
+from server.utils.vector2 import Vector2
 
 class WorldObject(object):
 
@@ -8,11 +9,14 @@ class WorldObject(object):
         self.position = Vector2(0, 0)
         self.map = None
 
+    def registerOnMap(self, mapObject):
+        self.map = mapObject
+        self.map.addToTileGrid(self)
+
     def sendPositionUpdateToMap(self):
         pckt = Packet.construct(Opcodes.MSG_MOVE_OBJECT)
         pckt.writeUint64(self.objectId)
-        pckt.writeInt32(self.position.x)
-        pckt.writeInt32(self.position.y)
+        pckt.writeInt32(self.position.x, self.position.y)
 
         self.map.broadcastPlayers(pckt)
 

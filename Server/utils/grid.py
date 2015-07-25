@@ -1,3 +1,8 @@
+from server.entities.unit import Unit
+
+def isUnit(entity):
+    return issubclass(entity.__class__, Unit)
+
 class WorldObjectGrid:
 
     def __init__(self, width, height):
@@ -8,13 +13,13 @@ class WorldObjectGrid:
         return iter(self.objects)
 
     def add(self, wObject):
-        if issubclass(wObject, Unit):
+        if isUnit(wObject):
             self.objects.add(wObject)
 
-        self.grid[wObject.x][wObject.y] = wObject
+        self.grid[wObject.position.x][wObject.position.y] = wObject
 
     def remove(self, wObject):
-        if issubclass(wObject, Unit):
+        if isUnit(wObject):
             self.objects.remove(wObject)
 
-        self.grid[wObject.x][wObject.y] = None
+        self.grid[wObject.position.x][wObject.position.y] = None

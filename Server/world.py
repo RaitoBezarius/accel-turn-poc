@@ -15,13 +15,16 @@ class World(object):
 
         self.lastDiff = time.time()
 
+        self.maps = {}
         self.worldMap = Map(1, 10, 10)
+
+        self.maps['default'] = self.worldMap
 
     def initialize(self):
         print ('Initializing the world...')
 
         # Accept new players.
-        endpoints.serverFromString(reactor, "tcp:8799").listen(WorldSessionFactory())
+        endpoints.serverFromString(reactor, "tcp:8799").listen(WorldSessionFactory(self))
 
         # Start the heartbeat
         self.heartbeat.start(self.heartbeat_delay)
@@ -34,7 +37,8 @@ class World(object):
     def update(self):
         diff = (time.time() - self.lastDiff)
         # print ('World updated in {} ms.'.format(math.floor(diff * 100)))
-        self.worldMap.update(diff)
+        for mapId, mapObject in self.maps.items():
+            mapObject.update(diff)
         self.lastDiff += diff
 
     def CLI(self):

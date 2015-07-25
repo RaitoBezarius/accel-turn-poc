@@ -1,6 +1,6 @@
 from world_object import WorldObject
-from network.packet import Packet
-from network.opcodes import Opcodes
+from shared.network.packet import Packet
+from shared.network.opcodes import Opcodes
 
 class Unit(WorldObject):
 
@@ -21,8 +21,7 @@ class Unit(WorldObject):
     def castSpell(spell, angle):
         pckt = Packet.construct(Opcodes.MSG_CAST_SPELL)
         pckt.writeUint64(self.objectId)
-        pckt.writeUint32(spell.effect)
-        pckt.writeUint32(spell.displayId)
+        pckt.writeUint32(spell.effect, spell.displayId)
         pckt.writeFloat(angle)
         pckt.writeUint16(self.map.generateSpellBoxID())
 
