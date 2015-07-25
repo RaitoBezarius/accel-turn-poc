@@ -15,11 +15,11 @@ class WorldObject(object):
 
         x, y, tx, ty = packet.read('!IIII')
 
-        texture = world.texture_loader.load(tileset)
+        texture = world.texture_loader.load(tileset, color_mask=sf.Color.WHITE)
         self.sprite = sf.Sprite(texture)
         self.sprite.color = sf.Color.WHITE
-        self.sprite.texture_rectangle = sf.IntRect(tx * self.tileSize, ty * self.tileSize, self.tileSize, self.tileSize)
-        self.sprite.position = sf.Vector2f(x * self.tileSize, y * self.tileSize)
+        self.sprite.texture_rectangle = sf.Rectangle(sf.Vector2(tx * self.tileSize, ty * self.tileSize), sf.Vector2(self.tileSize, self.tileSize))
+        self.sprite.position = sf.Vector2(x * self.tileSize, y * self.tileSize)
 
         print ('World object (id: %d, name: %s) loaded in the world.' % (self.objectId, self.name))
 
@@ -31,4 +31,5 @@ class WorldObject(object):
         self.sprite.position = pos
 
     def draw(self, window):
-        window.draw(self.sprite)
+        if self.sprite:
+            window.draw(self.sprite)

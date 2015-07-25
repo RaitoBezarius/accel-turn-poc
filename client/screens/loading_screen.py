@@ -14,7 +14,8 @@ class LoadingScreen(object):
     def draw(self, window):
         text = sf.Text("Loading...")
 
-        text.character_size = 30
+        text.character_size = 50
         text.color = sf.Color.BLUE
+        text.position = sf.Vector2(320, 220)
 
         window.draw(text)

@@ -1,4 +1,5 @@
 from twisted.internet import protocol
+from twisted.internet import threads
 from shared.network.packet import Packet
 from shared.network.opcodes import Opcodes, defineOpcodes
 
@@ -25,8 +26,6 @@ class WorldSession(protocol.Protocol):
         pass
 
     def dataReceived(self, data):
-        print ('Received data: %s' % (data))
-
         while len(data) >= Packet.HeaderSize:
             if not self.currentPacket.isHeaderComplete():
                 bytesRead = self.currentPacket.consumeHeader(data)
@@ -55,19 +54,24 @@ class WorldSession(protocol.Protocol):
         pass
 
     def handleInitialConnection(self, packet):
+        def onWorldLoaded(_):
+            print ('Pushing the world in the game!')
+            self.factory.game.popAllStates()
+            self.factory.game.pushState(self.world)
+
+            print ('Sending spawn request.')
+            pckt = Packet.construct(Opcodes.CMSG_SPAWN_INGAME)
+            self.sendPacket(pckt)
+
         success = packet.readBool()
         if success:
             playerId = packet.readUint64()
             mapId = packet.readUint32()
 
             self.world = World(playerId, mapId)
-            self.world.load()
+            d = threads.deferToThread(self.world.load)
 
-            self.factory.game.popAllState()
-            self.factory.game.pushState(self.world)
-
-            pckt = Packet.construct(Opcodes.CMSG_SPAWN_INGAME)
-            self.sendPacket(pckt)
+            d.addCallback(onWorldLoaded)
         else:
             print ('Initial connection refused by the server.')
 

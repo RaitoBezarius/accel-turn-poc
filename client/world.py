@@ -13,13 +13,15 @@ class World(object):
         self.texture_loader = TextureLoader()
 
     def load(self):
+        print ('World loading...')
         self.map.load(self.texture_loader)
+        print ('World loaded.')
 
     def update(self, diff):
         map(lambda world_object: world_object.update(diff), self.worldObjects.values())
 
     def draw(self, window):
-        self.map.draw(window)
+        window.draw(self.map)
         map(lambda world_object: world_object.draw(window), self.worldObjects.values())
 
     def handleEvent(self, window, event):

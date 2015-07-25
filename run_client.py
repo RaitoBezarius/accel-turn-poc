@@ -9,10 +9,13 @@ from client.screens.loading_screen import LoadingScreen
 class Game:
 
     def __init__(self):
-        self.window = sf.RenderWindow(sf.VideoMode(640, 480), "Acceleration - Proof of Concept")
-        self.window.framerate_limit = 60
         self.state = []
         self.lastDiff = 0
+
+    def initialize(self):
+        self.context = sf.Context()
+        self.window = sf.RenderWindow(sf.VideoMode(640, 480), "Acceleration - Proof of Concept")
+        self.window.framerate_limit = 60
 
     def pushState(self, state):
         self.state.append(state)
@@ -24,6 +27,8 @@ class Game:
         self.state = []
 
     def loop(self):
+        self.initialize()
+
         if not self.state:
             print ('No state provided !')
             reactor.stop()
@@ -34,19 +39,17 @@ class Game:
 
             for event in self.window.events:
                 if type(event) is sf.CloseEvent:
+                    reactor.stop()
                     self.window.close()
 
                 self.state[0].handleEvent(self.window, event)
 
+            self.state[0].update(diff)
             self.window.clear()
             self.state[0].draw(self.window)
             self.window.display()
-            # print ('Game loop executed in {} ms.'.format(math.floor(diff * 100)))
-            self.state[0].update(diff)
 
             self.lastDiff += diff
-
-        reactor.stop()
 
 def main():
     game = Game()
@@ -55,7 +58,11 @@ def main():
     reactor.callInThread(game.loop)
 
     reactor.connectTCP("127.0.0.1", 8799, WorldSessionFactory(game))
-    reactor.run()
+    try:
+        reactor.run()
+    except KeyboardInterrupt:
+        if reactor.running:
+            reactor.stop()
 
 
 if __name__ == '__main__':

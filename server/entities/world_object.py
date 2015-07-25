@@ -9,6 +9,9 @@ class WorldObject(object):
         self.position = Vector2(0, 0)
         self.map = None
 
+    def isInWorld(self):
+        return self.map is not None
+
     def registerOnMap(self, mapObject):
         self.map = mapObject
         self.map.addToTileGrid(self)
