@@ -68,7 +68,7 @@ class WorldSession(protocol.Protocol):
             playerId = packet.readUint64()
             mapId = packet.readUint32()
 
-            self.world = World(playerId, mapId)
+            self.world = World(playerId, mapId, self)
             d = threads.deferToThread(self.world.load)
 
             d.addCallback(onWorldLoaded)
@@ -83,8 +83,8 @@ class WorldSession(protocol.Protocol):
 
     def handleMoveObject(self, packet):
         objectId = packet.readUint64()
-        x, y = packet.read("!II")
-        self.world.worldObjects[objectId].updatePosition(sf.Vector2f(x, y))
+        x, y = packet.read("!ii")
+        self.world.worldObjects[objectId].updatePosition(sf.Vector2(x, y))
 
     def handleRemoveObject(self, packet):
         objectId = packet.readUint64()
@@ -106,6 +106,12 @@ class WorldSession(protocol.Protocol):
         pckt.writeString("Raito Bezarius", "dg_classm32.gif")
         pckt.writeUint16(32)
         pckt.writeUint32(0, 0)
+
+        self.sendPacket(pckt)
+
+    def sendMovementRequest(self, evtCode):
+        pckt = Packet.construct(Opcodes.CMSG_MOVE)
+        pckt.writeUint32(evtCode)
 
         self.sendPacket(pckt)
 

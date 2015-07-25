@@ -1,12 +1,13 @@
 from shared.network.packet import Packet
 from shared.network.opcodes import Opcodes
-from server.utils.vector2 import Vector2
+
+import sfml as sf
 
 class WorldObject(object):
 
     def __init__(self, objectId):
         self.objectId = objectId
-        self.position = Vector2(0, 0)
+        self.position = sf.Vector2(0, 0)
         self.map = None
 
     def isInWorld(self):
@@ -17,7 +18,7 @@ class WorldObject(object):
         self.map.addToTileGrid(self)
 
     def sendPositionUpdateToMap(self):
-        pckt = Packet.construct(Opcodes.MSG_MOVE_OBJECT)
+        pckt = Packet.construct(Opcodes.SMSG_MOVE_OBJECT)
         pckt.writeUint64(self.objectId)
         pckt.writeInt32(self.position.x, self.position.y)
 

@@ -5,8 +5,9 @@ import sfml as sf
 
 class World(object):
 
-    def __init__(self, objectId, mapId):
+    def __init__(self, objectId, mapId, session):
         self.me_id = objectId
+        self.session = session
         self.worldObjects = {}
         self.map = TileMap(mapId)
 
@@ -25,7 +26,11 @@ class World(object):
         map(lambda world_object: world_object.draw(window), self.worldObjects.values())
 
     def handleEvent(self, window, event):
-        pass
+        moves_actions = [sf.Keyboard.UP, sf.Keyboard.DOWN, sf.Keyboard.LEFT, sf.Keyboard.RIGHT]
+        if type(event) is sf.KeyEvent and event.pressed:
+            if event.code in moves_actions:
+                self.session.sendMovementRequest(event.code)
+
 
     def addObject(self, world_object):
         self.worldObjects[world_object.objectId] = world_object

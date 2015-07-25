@@ -14,7 +14,7 @@ class Game:
 
     def initialize(self):
         self.context = sf.Context()
-        self.window = sf.RenderWindow(sf.VideoMode(640, 480), "Acceleration - Proof of Concept")
+        self.window = sf.RenderWindow(sf.VideoMode(1024, 768), "Acceleration - Proof of Concept")
         self.window.framerate_limit = 60
 
     def pushState(self, state):

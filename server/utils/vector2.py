@@ -1,8 +1,14 @@
-from collections import namedtuple
+import sfml as sf
 
-Vector2 = namedtuple('Vector2', 'x y')
+Vector2 = sf.Vector2
 
 def applyPosition(initial, delta):
-    initial.x += delta.x
-    initial.y += delta.y
-    return initial
+    dx, dy = None, None
+
+    if isinstance(delta, tuple):
+        dx, dy = delta
+    else:
+        dx, dy = delta.x, delta.y
+
+    newPos = Vector2(initial.x + dx, initial.y + dy)
+    return newPos

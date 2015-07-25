@@ -2,10 +2,12 @@ from server.utils.grid import WorldObjectGrid
 from server.utils.vector2 import applyPosition
 from shared.network.packet import Packet
 from shared.network.opcodes import Opcodes
+from shared.constants.movement import MOVEMENT_VALUES
 
 from functools import partial
 
 from player import Player
+
 
 class Map:
 
@@ -16,24 +18,15 @@ class Map:
         self.spellBoxID = 0
 
     def isValidPos(self, pos):
-        for coordinate in (self.pos.x, self.pos.y):
-            if coordinate < 0:
-                return False
-
-        if self.pos.x > self.grid.width or self.pos.y > self.grid.height:
+        if pos.x < 0 or pos.x > self.grid.width:
             return False
+        elif pos.y < 0 or pos.y > self.grid.height:
+            return False
+        else:
+            return True
 
-
-    def checkOutside(self, pos, direction):
-        moves = {
-            MOVE_UP: (0, 1),
-            MOVE_DOWN: (0, -1),
-            MOVE_LEFT: (-1, 0),
-            MOVE_RIGHT: (1, 0)
-        }
-
-        newPos = applyPosition(pos, self.moves[direction])
-        return self.isValidPos(newPos)
+    def checkIfOutside(self, pos, direction):
+        return (not self.isValidPos(applyPosition(pos, MOVEMENT_VALUES[direction]))
 
     def update(self, diff):
         map(partial(self.unitUpdate, diff), self.grid)
@@ -51,6 +44,10 @@ class Map:
 
     def removeFromTileGrid(self, wObject):
         self.grid.remove(wObject)
+
+    def updateOnTileGrid(self, oldPos, wObject):
+        if self.isValidPos(oldPos) and self.isValidPos(wObject.position):
+            self.grid.updatePosition(oldPos, wObject)
 
     def addSpell(self, caster, spellTemplate, angle):
         raise NotImplemented
@@ -74,6 +71,6 @@ class Map:
         for unit in self.grid:
             unit.sendPacket(pckt)
 
-    def broadcastPacket(self, pckt):
+    def broadcastPlayers(self, pckt):
         map(lambda player: player.sendPacket(pckt), filter(lambda unit: isinstance(unit, Player), self.grid))
 

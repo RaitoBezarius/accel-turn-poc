@@ -13,7 +13,7 @@ class WorldObject(object):
         tileset = packet.readString()
         self.tileSize = packet.readUint16()
 
-        x, y, tx, ty = packet.read('!IIII')
+        x, y, tx, ty = packet.read('!iiII')
 
         texture = world.texture_loader.load(tileset, color_mask=sf.Color.WHITE)
         self.sprite = sf.Sprite(texture)
@@ -27,7 +27,8 @@ class WorldObject(object):
         pass
 
     def updatePosition(self, newPos):
-        pos = sf.Vector2f(newPos.x * self.tileSize, newPos.y * self.tileSize)
+        pos = sf.Vector2(newPos.x * self.tileSize, newPos.y * self.tileSize)
+        print ("New pos is %f;%f" % (pos.x, pos.y))
         self.sprite.position = pos
 
     def draw(self, window):

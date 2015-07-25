@@ -16,7 +16,7 @@ class World(object):
         self.lastDiff = time.time()
 
         self.maps = {}
-        self.worldMap = Map(1, 10, 10)
+        self.worldMap = Map(1, 30, 20)
 
         self.maps['default'] = self.worldMap
 

@@ -6,6 +6,8 @@ def isUnit(entity):
 class WorldObjectGrid:
 
     def __init__(self, width, height):
+        self.width = width
+        self.height = height
         self.grid = [[None] * height for _ in range(width)]
         self.objects = set()
 
@@ -23,3 +25,10 @@ class WorldObjectGrid:
             self.objects.remove(wObject)
 
         self.grid[wObject.position.x][wObject.position.y] = None
+
+    def updatePosition(self, oldPos, wObject):
+        try:
+            self.grid[oldPos.x][oldPos.y] = None
+            self.grid[wObject.position.x][wObject.position.y] = wObject
+        except IndexError:
+            print ('Failed to update position, bad position in the grid.')

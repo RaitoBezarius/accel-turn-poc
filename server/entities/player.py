@@ -1,6 +1,11 @@
 from unit import Unit
 from shared.network.packet import Packet
 from shared.network.opcodes import Opcodes
+from shared.constants.movement import MOVEMENT_VALUES
+
+from server.utils.vector2 import applyPosition
+
+import sfml as sf
 
 class Player(Unit):
 
@@ -23,7 +28,7 @@ class Player(Unit):
         pckt.writeUint64(self.objectId)
         pckt.writeString(self.name, self.tilesetFilename)
         pckt.writeUint16(self.tileSize)
-        pckt.writeUint32(self.position.x, self.position.y)
+        pckt.writeInt32(self.position.x, self.position.y)
         pckt.writeUint32(self.tilesetPos.x, self.tilesetPos.y)
 
         return pckt
@@ -44,15 +49,20 @@ class Player(Unit):
     def bindSession(self, session):
         self.session = session
 
-    def move(direction):
+    def move(self, direction):
         lastDirection = direction
-        if self.currentMap.checkIfOutside(self.pos, direction):
+        if self.map.checkIfOutside(self.position, direction):
             return False
 
-        # Check if there is nothing to collide with.
+        oldPos = self.position
+
+        self.position = applyPosition(self.position, MOVEMENT_VALUES[direction])
+        self.map.updateOnTileGrid(oldPos, self)
+
+        # TODO: Check if there is nothing to collide with.
         # If not, let's update our position from Map.
 
-        return False
+        return True
 
     def sendPacket(self, packet):
         assert (self.session is not None)
