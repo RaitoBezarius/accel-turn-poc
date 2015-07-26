@@ -46,7 +46,6 @@ class WorldSession(protocol.Protocol):
         if packet.opcode == Opcodes.MSG_NULL:
             print ('Received a NULL opcode!')
 
-        print ('Received %s opcode.' % (self.factory.opcodesTable[packet.opcode].name))
         self.factory.opcodesTable[packet.opcode].handler(self, packet)
 
     def handleNULL(self, packet):
@@ -117,7 +116,7 @@ class WorldSession(protocol.Protocol):
         pckt = Packet.construct(Opcodes.CMSG_MOVE)
         pckt.writeUint32(evtCode)
 
-        self.world.me.doMovePrediction(pckt._id, evtCode)
+        self.world.me.doMovePrediction(self.world.map, pckt._id, evtCode)
         self.sendPacket(pckt)
 
     def sendPacket(self, pckt):

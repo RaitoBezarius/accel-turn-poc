@@ -54,17 +54,28 @@ class WorldObject(object):
             self.velocity = vel
 
         pos = self.toLocalPosition(newPos)
-        if originalPacketId not in self.predictionHistory:
-            print ('Prediction correction (({oldPos.x}, {oldPos.y} vs ({newPos.x}, {newPos.y}))'.format(oldPos=self.world_position, newPos=newPos))
-            self.enqueuePositionUpdate(pos)
+
+        if originalPacketId is not None:
+            if originalPacketId not in self.predictionHistory:
+                print ('Prediction correction (({oldPos.x}, {oldPos.y} vs ({newPos.x}, {newPos.y}))'.format(oldPos=self.world_position, newPos=newPos))
+                self.enqueuePositionUpdate(pos)
+            else:
+                del self.predictionHistory[originalPacketId]
         else:
-            del self.predictionHistory[originalPacketId]
+            self.enqueuePositionUpdate(pos)
 
 
-    def doMovePrediction(self, pcktId, direction):
+    def doMovePrediction(self, map, pcktId, direction):
         oldPos = self.world_position
         dx, dy = MOVEMENT_VALUES[direction]
         newPos = sf.Vector2(oldPos.x + (dx * self.velocity.x), oldPos.y + (dy * self.velocity.y))
+
+        map_width, map_height = map.size
+        if newPos.x < 0 or newPos.x > map_width:
+            return
+
+        if newPos.y < 0 or newPos.y > map_height:
+            return
 
         self.predictionHistory[pcktId] = newPos
         self.enqueuePositionUpdate(self.toLocalPosition(newPos))
