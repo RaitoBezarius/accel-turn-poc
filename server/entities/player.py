@@ -26,14 +26,15 @@ class Player(Unit):
 
         Player.seqId += 1
 
-    def __del__(self):
-        Player.seqId -= 1
-
     def update(self, diff):
         for pcktId, direction in self.movesHistory.items():
             oldPos = self.position
             dx, dy = MOVEMENT_VALUES[direction]
             self.position = Vector2(oldPos.x + (dx * self.velocity.x), oldPos.y + (dy * self.velocity.y))
+
+            if not self.map.isValidPos(self.position):
+                self.position = oldPos
+                continue
 
             if self.position != oldPos:
                 self.map.updateOnTileGrid(oldPos, self)
@@ -62,6 +63,7 @@ class Player(Unit):
         if self.map:
             self.map.removeFromTileGrid(self)
             self.map.unregisterPlayer(self)
+        Player.seqId -= 1
         print ('Cleaned player %s successfully.' % (self.name))
 
     def bindSession(self, session):
