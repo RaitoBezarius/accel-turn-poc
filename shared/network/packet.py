@@ -1,4 +1,5 @@
 import struct
+import time
 
 from functools import partial
 from array import array
@@ -20,12 +21,13 @@ class Packet:
     }
 
     seq_id = 0
-    HeaderSize = struct.calcsize('!QLQ')
-    HeaderFmt = '!QLQ'
+    HeaderSize = struct.calcsize('!QLdQ')
+    HeaderFmt = '!QLdQ'
 
     def __init__(self):
         self._id = None
         self.opcode = None
+        self.time = None
         self.content_size = None
         self.content = array('c')
         self.current_offset = 0
@@ -51,13 +53,14 @@ class Packet:
                 setattr(self, methodName, methodObject)
 
     def serialize(self):
-        header = self.header_serializer.pack(self._id, self.opcode, self.content_size)
+        header = self.header_serializer.pack(self._id, self.opcode, self.time, self.content_size)
         return header + self.content.tostring()
 
     @staticmethod
     def construct(opcode):
         pckt = Packet()
         pckt._id = Packet.generate_seq_id()
+        pckt.time = time.time()
         pckt.opcode = opcode
         pckt.content_size = 0
         return pckt
@@ -77,7 +80,7 @@ class Packet:
         if len(data) < self.HeaderSize:
             return 0
         else:
-            self._id, self.opcode, self.content_size = struct.unpack_from(self.HeaderFmt, data)
+            self._id, self.opcode, self.time, self.content_size = struct.unpack_from(self.HeaderFmt, data)
             return self.HeaderSize
 
     def consumeContent(self, data):
