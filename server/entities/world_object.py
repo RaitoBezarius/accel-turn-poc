@@ -8,6 +8,7 @@ class WorldObject(object):
     def __init__(self, objectId):
         self.objectId = objectId
         self.position = sf.Vector2(0, 0)
+        self.velocity = sf.Vector2(1, 1)
         self.map = None
 
     def isInWorld(self):
@@ -17,12 +18,15 @@ class WorldObject(object):
         self.map = mapObject
         self.map.addToTileGrid(self)
 
-    def sendPositionUpdateToMap(self):
+    def sendPositionUpdateToMap(self, diff, originalPcktId):
         pckt = Packet.construct(Opcodes.SMSG_MOVE_OBJECT)
         pckt.writeUint64(self.objectId)
-        pckt.writeInt32(self.position.x, self.position.y)
+        pckt.writeVector(self.position, self.velocity)
 
-        self.map.broadcastPlayers(pckt)
+        self.map.broadcastPlayers(pckt, exclude=[self.objectId])
+
+        pckt.writeUint64(originalPcktId)
+        self.sendPacket(pckt)
 
     def updatePosition(self, pos):
         self.map.removeFromTileGrid(self)

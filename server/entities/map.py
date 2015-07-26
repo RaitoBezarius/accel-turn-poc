@@ -26,7 +26,7 @@ class Map:
             return True
 
     def checkIfOutside(self, pos, direction):
-        return (not self.isValidPos(applyPosition(pos, MOVEMENT_VALUES[direction]))
+        return (not self.isValidPos(applyPosition(pos, MOVEMENT_VALUES[direction])))
 
     def update(self, diff):
         map(partial(self.unitUpdate, diff), self.grid)
@@ -71,6 +71,9 @@ class Map:
         for unit in self.grid:
             unit.sendPacket(pckt)
 
-    def broadcastPlayers(self, pckt):
-        map(lambda player: player.sendPacket(pckt), filter(lambda unit: isinstance(unit, Player), self.grid))
+    def broadcastPlayers(self, pckt, exclude=None):
+        if exclude is None:
+            exclude = []
+
+        map(lambda player: player.sendPacket(pckt), filter(lambda unit: (isinstance(unit, Player)) and (unit.objectId not in exclude), self.grid))
 

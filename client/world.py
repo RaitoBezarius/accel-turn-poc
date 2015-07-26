@@ -13,6 +13,10 @@ class World(object):
 
         self.texture_loader = TextureLoader()
 
+    @property
+    def me(self):
+        return self.worldObjects[self.me_id]
+
     def load(self):
         print ('World loading...')
         self.map.load(self.texture_loader)
@@ -36,4 +40,4 @@ class World(object):
         self.worldObjects[world_object.objectId] = world_object
 
     def removeObject(self, world_object):
-        self.worldObjects.remove(world_object)
+        self.worldObjects.pop(world_object)

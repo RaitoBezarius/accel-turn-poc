@@ -93,8 +93,9 @@ class WorldSession(protocol.Protocol):
     def handleMove(self, packet):
         # Handle player's movements.
         direction = packet.readUint32()
-        if self.player.move(direction):
-            self.player.sendPositionUpdateToMap()
+        pcktId = packet._id
+
+        self.player.move(pcktId, direction)
 
     def handleChatMessage(self, packet):
         pass

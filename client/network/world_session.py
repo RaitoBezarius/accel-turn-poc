@@ -83,8 +83,12 @@ class WorldSession(protocol.Protocol):
 
     def handleMoveObject(self, packet):
         objectId = packet.readUint64()
-        x, y = packet.read("!ii")
-        self.world.worldObjects[objectId].updatePosition(sf.Vector2(x, y))
+        x, y, vx, vy = packet.read("!iiii")
+        originalPcktId = None
+        if objectId == self.world.me_id:
+            originalPcktId = packet.readUint64()
+
+        self.world.worldObjects[objectId].updatePosition(originalPcktId, sf.Vector2(x, y), sf.Vector2(vx, vy))
 
     def handleRemoveObject(self, packet):
         objectId = packet.readUint64()
@@ -113,6 +117,7 @@ class WorldSession(protocol.Protocol):
         pckt = Packet.construct(Opcodes.CMSG_MOVE)
         pckt.writeUint32(evtCode)
 
+        self.world.me.doMovePrediction(pckt._id, evtCode)
         self.sendPacket(pckt)
 
     def sendPacket(self, pckt):
