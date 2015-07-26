@@ -2,7 +2,7 @@ import sfml as sf
 
 from shared.constants.movement import MOVEMENT_VALUES
 
-from collections import deque
+from Queue import Queue
 
 class WorldObject(object):
 
@@ -14,7 +14,8 @@ class WorldObject(object):
         self.velocity = None
 
         self.predictionHistory = {}
-        self.nextPositions = deque()
+        self.nextPositions = Queue()
+        self.nextPredictions = Queue()
 
     def load(self, world, packet):
         self.name = packet.readString()
@@ -34,9 +35,15 @@ class WorldObject(object):
         print ('World object (id: %d, name: %s) loaded in the world.' % (self.objectId, self.name))
 
     def update(self, diff):
-        while self.nextPositions:
-            nextPos = self.nextPositions.pop()
-            self.sprite.position = nextPos
+        while not self.nextPredictions.empty():
+            nextPrediction = self.nextPredictions.get()
+            oldPos = self.world_position
+            posPredicted = sf.Vector2(oldPos.x + (nextPrediction.x * self.velocity.x), oldPos.y + (nextPrediction.y * self.velocity.y))
+            self.sprite.position = self.toLocalPosition(posPredicted)
+
+        while not self.nextPositions.empty():
+            nextPosition = self.nextPositions.get()
+            self.sprite.position = nextPosition
 
     @property
     def world_position(self):
@@ -47,7 +54,10 @@ class WorldObject(object):
         return sf.Vector2(pos.x * self.tileSize, pos.y * self.tileSize)
 
     def enqueuePositionUpdate(self, pos):
-        self.nextPositions.append(pos)
+        self.nextPositions.put(pos)
+
+    def enqueueMovePrediction(self, move):
+        self.nextPredictions.put(move)
 
     def updatePosition(self, originalPacketId, newPos, vel):
         if self.velocity != vel:
@@ -79,7 +89,7 @@ class WorldObject(object):
             return
 
         self.predictionHistory[pcktId] = newPos
-        self.enqueuePositionUpdate(self.toLocalPosition(newPos))
+        self.enqueueMovePrediction(sf.Vector2(dx, dy))
 
     def draw(self, window):
         if self.sprite:
