@@ -2,6 +2,8 @@ import sfml as sf
 
 from shared.constants.movement import MOVEMENT_VALUES
 
+from collections import deque
+
 class WorldObject(object):
 
     def __init__(self, objectId):
@@ -12,6 +14,7 @@ class WorldObject(object):
         self.velocity = None
 
         self.predictionHistory = {}
+        self.nextPositions = deque()
 
     def load(self, world, packet):
         self.name = packet.readString()
@@ -31,7 +34,9 @@ class WorldObject(object):
         print ('World object (id: %d, name: %s) loaded in the world.' % (self.objectId, self.name))
 
     def update(self, diff):
-        pass
+        while self.nextPositions:
+            nextPos = self.nextPositions.pop()
+            self.sprite.position = nextPos
 
     @property
     def world_position(self):
@@ -41,6 +46,9 @@ class WorldObject(object):
     def toLocalPosition(self, pos):
         return sf.Vector2(pos.x * self.tileSize, pos.y * self.tileSize)
 
+    def enqueuePositionUpdate(self, pos):
+        self.nextPositions.append(pos)
+
     def updatePosition(self, originalPacketId, newPos, vel):
         if self.velocity != vel:
             self.velocity = vel
@@ -48,7 +56,7 @@ class WorldObject(object):
         pos = self.toLocalPosition(newPos)
         if originalPacketId not in self.predictionHistory:
             print ('Prediction correction (({oldPos.x}, {oldPos.y} vs ({newPos.x}, {newPos.y}))'.format(oldPos=self.world_position, newPos=newPos))
-            self.sprite.position = pos
+            self.enqueuePositionUpdate(pos)
         else:
             del self.predictionHistory[originalPacketId]
 
@@ -59,7 +67,7 @@ class WorldObject(object):
         newPos = sf.Vector2(oldPos.x + (dx * self.velocity.x), oldPos.y + (dy * self.velocity.y))
 
         self.predictionHistory[pcktId] = newPos
-        self.sprite.position = self.toLocalPosition(newPos)
+        self.enqueuePositionUpdate(self.toLocalPosition(newPos))
 
     def draw(self, window):
         if self.sprite:
