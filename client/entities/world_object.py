@@ -56,7 +56,8 @@ class WorldObject(object):
         pos = self.toLocalPosition(newPos)
 
         if originalPacketId is not None:
-            if originalPacketId not in self.predictionHistory:
+            if originalPacketId not in self.predictionHistory or self.predictionHistory[originalPacketId] != newPos:
+                # At this point, we're going to get a teleport. :///
                 print ('Prediction correction (({oldPos.x}, {oldPos.y} vs ({newPos.x}, {newPos.y}))'.format(oldPos=self.world_position, newPos=newPos))
                 self.enqueuePositionUpdate(pos)
             else:
