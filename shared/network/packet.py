@@ -6,7 +6,7 @@ from array import array
 
 class Packet:
 
-    integerFmt = {
+    convenienceFmt = {
         "int8": "!b",
         "int16": "!h",
         "int32": "!i",
@@ -34,9 +34,9 @@ class Packet:
 
         self.header_serializer = struct.Struct(self.HeaderFmt)
 
-        for integerType, fmt in self.integerFmt.items():
+        for fieldType, fmt in self.convenienceFmt.items():
             for methodName in ("read", "write"):
-                methodName += integerType.title()
+                methodName += fieldType.title()
                 def doOperation(isRead, fmt, self, *args):
                     if isRead:
                         value, = self.read(fmt)
@@ -102,6 +102,13 @@ class Packet:
         for string in strings:
             self.writeUint32(len(string))
             self.write('!{}s'.format(len(string)), string)
+
+    def writeVector(self, *vectors):
+        for vector in vectors:
+            if isinstance(vector.x, int):
+                self.writeInt32(vector.x, vector.y)
+            elif isinstance(vector.x, float):
+                self.writeFloat(vector.x, vector.y)
 
     def read(self, fmt):
         offset = struct.calcsize(fmt)
