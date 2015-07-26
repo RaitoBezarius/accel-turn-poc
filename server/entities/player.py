@@ -30,7 +30,6 @@ class Player(Unit):
         Player.seqId -= 1
 
     def update(self, diff):
-        print ('Updating player {name} in {diff} ms. (moves: {nMoves})'.format(name=self.name, diff=diff, nMoves=len(self.movesHistory)))
         for pcktId, direction in self.movesHistory.items():
             oldPos = self.position
             dx, dy = MOVEMENT_VALUES[direction]

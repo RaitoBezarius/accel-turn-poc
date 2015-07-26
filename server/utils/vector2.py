@@ -10,5 +10,4 @@ def applyPosition(initial, delta):
     else:
         dx, dy = delta.x, delta.y
 
-    newPos = Vector2(initial.x + dx, initial.y + dy)
-    return newPos
+    return Vector2(initial.x + dx, initial.y + dy)
