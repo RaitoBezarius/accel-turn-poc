@@ -9,7 +9,7 @@ from twisted.internet import reactor
 
 class World(object):
 
-    def __init__(self, heartbeat_delay=50):
+    def __init__(self, heartbeat_delay=10):
         self.heartbeat_delay = heartbeat_delay / 100.0
         self.heartbeat = task.LoopingCall(self.update)
 
