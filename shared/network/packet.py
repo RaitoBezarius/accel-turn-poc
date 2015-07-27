@@ -3,6 +3,7 @@ import time
 
 from functools import partial
 from array import array
+import zlib
 
 class Packet:
 
@@ -56,8 +57,9 @@ class Packet:
                 setattr(self, methodName, methodObject)
 
     def serialize(self):
-        header = self.header_serializer.pack(self._id, self.opcode, self.time, self.content_size)
-        return header + self.content.tostring()
+        compressedContent = zlib.compress(self.content.tostring())
+        header = self.header_serializer.pack(self._id, self.opcode, self.time, len(compressedContent))
+        return header + compressedContent
 
     @staticmethod
     def construct(opcode):
@@ -79,6 +81,9 @@ class Packet:
     def isComplete(self):
         return (self.content_size is not None) and (len(self.content) == self.content_size)
 
+    def __len__(self):
+        return len(self.serialize())
+
     def consumeHeader(self, data):
         if len(data) < self.HeaderSize:
             return 0
@@ -90,6 +95,14 @@ class Packet:
         size_expected = self.content_size - len(self.content)
         content = data[:size_expected]
         self.content.extend(content)
+
+        # Expansion complete, let's decompress the content.
+        if self.content_size == len(self.content):
+            uncompressed_content = zlib.decompress(self.content.tostring())
+            self.content_size = len(uncompressed_content)
+            self.content = array('c')
+            self.content.extend(uncompressed_content)
+
         return len(content)
 
     def resetReadPos(self):
