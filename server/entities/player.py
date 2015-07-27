@@ -4,7 +4,7 @@ from shared.network.opcodes import Opcodes
 from shared.constants.movement import MOVEMENT_VALUES
 from server.utils.vector2 import Vector2
 
-from collections import OrderedDict
+from collections import deque
 
 import sfml as sf
 
@@ -21,26 +21,41 @@ class Player(Unit):
         self.tilesetFilename = tilesetFilename
         self.tilesetPos = tilesetPos
 
-        self.movesHistory = OrderedDict()
+        self.movesHistory = deque()
         self.lastDirection = None
+
+        self.simulationTime = 0
 
         Player.seqId += 1
 
+    def applyMove(self, direction):
+        oldPos = self.position
+        dx, dy = MOVEMENT_VALUES[direction]
+        position = Vector2(oldPos.x + (dx * self.velocity.x), oldPos.y + (dy * self.velocity.y))
+
+        if not self.map.isValidPos(position):
+            return False
+
+        self.position = position
+        if self.position != oldPos:
+            self.map.updateOnTileGrid(oldPos, self)
+
+        print ('({oldPos.x}, {oldPos.y}) => ({newPos.x}, {newPos.y})'
+            .format(oldPos=oldPos, newPos=position))
+
+        return True
+
     def update(self, diff):
-        for pcktId, direction in self.movesHistory.items():
-            oldPos = self.position
-            dx, dy = MOVEMENT_VALUES[direction]
-            self.position = Vector2(oldPos.x + (dx * self.velocity.x), oldPos.y + (dy * self.velocity.y))
+        packetId = None
+        oldPosition = self.position
+        if len(self.movesHistory) > 0:
+            packetId, direction = self.movesHistory.popleft()
 
-            if not self.map.isValidPos(self.position):
-                self.position = oldPos
-                continue
+            self.applyMove(direction)
 
-            if self.position != oldPos:
-                self.map.updateOnTileGrid(oldPos, self)
-                self.sendPositionUpdateToMap(diff, pcktId)
-
-        self.movesHistory.clear()
+        self.simulationTime += (diff * 100)
+        self.sendPositionUpdateToMap(diff, packetId, ignoreMyself=(oldPosition == self.position))
+        print ('Sent position at t = {} ms.'.format(self.simulationTime))
 
 
     def packData(self):
@@ -77,7 +92,7 @@ class Player(Unit):
         # If not, let's add this position to our move history.
 
         lastDirection = direction
-        self.movesHistory[pcktId] = direction
+        self.movesHistory.append((pcktId, direction))
 
 
     def sendPacket(self, packet):

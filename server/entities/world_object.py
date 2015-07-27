@@ -18,15 +18,18 @@ class WorldObject(object):
         self.map = mapObject
         self.map.addToTileGrid(self)
 
-    def sendPositionUpdateToMap(self, diff, originalPcktId):
+    def sendPositionUpdateToMap(self, diff, packetId=None, ignoreMyself=False):
         pckt = Packet.construct(Opcodes.SMSG_MOVE_OBJECT)
         pckt.writeUint64(self.objectId)
         pckt.writeVector(self.position, self.velocity)
 
         self.map.broadcastPlayers(pckt, exclude=[self.objectId])
 
-        pckt.writeUint64(originalPcktId)
-        self.sendPacket(pckt)
+        if not ignoreMyself:
+            if packetId is not None:
+                pckt.writeUint64(packetId)
+
+            self.sendPacket(pckt)
 
     def updatePosition(self, pos):
         self.map.removeFromTileGrid(self)

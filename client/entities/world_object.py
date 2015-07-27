@@ -1,21 +1,27 @@
 import sfml as sf
 
 from shared.constants.movement import MOVEMENT_VALUES
+from client.utils.motion_controller import LocalController, RemoteController
 
-from Queue import Queue
+from collections import deque
 
 class WorldObject(object):
 
-    def __init__(self, objectId):
+    def __init__(self, objectId, local):
         self.objectId = objectId
         self.tileSize = None
         self.sprite = None
         self.name = None
         self.velocity = None
+        self.local = local
 
-        self.predictionHistory = {}
-        self.nextPositions = Queue()
-        self.nextPredictions = Queue()
+        if self.local:
+            self.motionController = LocalController(self)
+        else:
+            self.motionController = RemoteController(self)
+
+        self.nextPositions = deque()
+        self.updateMutex = sf.Mutex()
 
     def load(self, world, packet):
         self.name = packet.readString()
@@ -34,16 +40,18 @@ class WorldObject(object):
 
         print ('World object (id: %d, name: %s) loaded in the world.' % (self.objectId, self.name))
 
-    def update(self, diff):
-        while not self.nextPredictions.empty():
-            nextPrediction = self.nextPredictions.get()
-            oldPos = self.world_position
-            posPredicted = sf.Vector2(oldPos.x + (nextPrediction.x * self.velocity.x), oldPos.y + (nextPrediction.y * self.velocity.y))
-            self.sprite.position = self.toLocalPosition(posPredicted)
+    def updatePosition(self, position):
+        self.sprite.position = self.toLocalPosition(position)
 
-        while not self.nextPositions.empty():
-            nextPosition = self.nextPositions.get()
-            self.sprite.position = nextPosition
+    def update(self, diff):
+        self.updateMutex.lock()
+        nextState = self.motionController.apply()
+        if nextState is not None:
+            nextState.simulate(self.world_position, self.velocity)
+            self.updatePosition(nextState.position)
+            self.motionController.applied(nextState)
+            print ('Updated position with: {}'.format(nextState))
+        self.updateMutex.unlock()
 
     @property
     def world_position(self):
@@ -54,42 +62,18 @@ class WorldObject(object):
         return sf.Vector2(pos.x * self.tileSize, pos.y * self.tileSize)
 
     def enqueuePositionUpdate(self, pos):
-        self.nextPositions.put(pos)
+        self.motionController.enqueuePosition(pos)
 
-    def enqueueMovePrediction(self, move):
-        self.nextPredictions.put(move)
+    def moveObject(self, packet):
+        self.updateMutex.lock()
+        self.motionController.validate(packet)
+        self.updateMutex.unlock()
 
-    def updatePosition(self, originalPacketId, newPos, vel):
-        if self.velocity != vel:
-            self.velocity = vel
-
-        pos = self.toLocalPosition(newPos)
-
-        if originalPacketId is not None:
-            if originalPacketId not in self.predictionHistory or self.predictionHistory[originalPacketId] != newPos:
-                # At this point, we're going to get a teleport. :///
-                print ('Prediction correction (({oldPos.x}, {oldPos.y} vs ({newPos.x}, {newPos.y}))'.format(oldPos=self.world_position, newPos=newPos))
-                self.enqueuePositionUpdate(pos)
-            else:
-                del self.predictionHistory[originalPacketId]
-        else:
-            self.enqueuePositionUpdate(pos)
-
-
-    def doMovePrediction(self, map, pcktId, direction):
-        oldPos = self.world_position
-        dx, dy = MOVEMENT_VALUES[direction]
-        newPos = sf.Vector2(oldPos.x + (dx * self.velocity.x), oldPos.y + (dy * self.velocity.y))
-
-        map_width, map_height = map.size
-        if newPos.x < 0 or newPos.x > map_width:
-            return
-
-        if newPos.y < 0 or newPos.y > map_height:
-            return
-
-        self.predictionHistory[pcktId] = newPos
-        self.enqueueMovePrediction(sf.Vector2(dx, dy))
+    def doMovePrediction(self, predictionId, direction):
+        assert (self.local)
+        self.updateMutex.lock()
+        self.motionController.predict(predictionId, direction)
+        self.updateMutex.unlock()
 
     def draw(self, window):
         if self.sprite:

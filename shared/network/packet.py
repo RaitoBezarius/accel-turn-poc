@@ -35,19 +35,22 @@ class Packet:
         self.header_serializer = struct.Struct(self.HeaderFmt)
 
         for fieldType, fmt in self.convenienceFmt.items():
-            for methodName in ("read", "write"):
+            for methodName in ("read", "write", "canRead"):
                 methodName += fieldType.title()
-                def doOperation(isRead, fmt, self, *args):
-                    if isRead:
+                def doOperation(methodType, fmt, self, *args):
+                    if methodType.startswith("read"):
                         value, = self.read(fmt)
                         return value
-                    else:
+                    elif methodType.startswith("write"):
                         add_fmt = fmt[1] * (len(args) - 1)
                         fmt += add_fmt
                         return self.write(fmt, *args)
+                    else:
+                        size = struct.calcsize(fmt)
+                        return (self.content_size - self.current_offset) >= size
 
                 methodObject = partial(doOperation,
-                    methodName.startswith("read"),
+                    methodName,
                     fmt,
                     self)
                 setattr(self, methodName, methodObject)
